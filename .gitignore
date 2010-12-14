@@ -1,2 +1,3 @@
-images/*.jpg
-images/*.png
+**/.DS_Store
+public/images/*.jpg
+public/images/*.png

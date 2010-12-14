@@ -22,15 +22,20 @@ package com.potomak {
 
     private var cam:Camera;
     private var video:Video;
-    
     private var bitmapData:BitmapData;
     private var bitmap:Bitmap;
-    
     private var capture:Button;
     private var save:Button;
+    private var urlLoader:URLLoader;
+    
+    private static const JPG:String = "jpg";
+    private static const PNG:String = "png";
 
     public function TakePicture():void {
       logToConsole("starting...");
+      
+      urlLoader = new URLLoader();
+      urlLoader.addEventListener(Event.COMPLETE, sendComplete);
       
       setupUi();
     }
@@ -96,31 +101,45 @@ package com.potomak {
       //snd.play();
       bitmapData.draw(video);
       save.enabled = true;
-      save.addEventListener(MouseEvent.CLICK, saveJPG);
+      //save.addEventListener(MouseEvent.CLICK, saveJPG);
+      save.addEventListener(MouseEvent.CLICK, savePNG);
     }
-
-    private function saveJPG(e:Event):void {
-      //var myEncoder:JPGEncoder = new JPGEncoder(100);
-      //var byteArray:ByteArray = myEncoder.encode(bitmapData);
-      var byteArray:ByteArray = PNGEncoder.encode(bitmapData);
+    
+    private function saveImage(type:String):void {
+      var byteArray:ByteArray;
+      
+      switch(type) {
+        case JPG:
+          var myEncoder:JPGEncoder = new JPGEncoder(100);
+          byteArray = myEncoder.encode(bitmapData);
+          break;
+        case PNG:
+          byteArray = PNGEncoder.encode(bitmapData);
+          break;
+      }
 
       var header:URLRequestHeader = new URLRequestHeader("Content-type", "application/octet-stream");
 
-      var saveJPG:URLRequest = new URLRequest("save.php");
-      saveJPG.requestHeaders.push(header);
-      saveJPG.method = URLRequestMethod.POST;
-      saveJPG.data = byteArray;
+      //var saveImage:URLRequest = new URLRequest("save.php");
+      var saveImage:URLRequest = new URLRequest("save");
+      saveImage.requestHeaders.push(header);
+      saveImage.method = URLRequestMethod.POST;
+      saveImage.data = byteArray;
 
-      var urlLoader:URLLoader = new URLLoader();
-      //urlLoader.addEventListener(Event.COMPLETE, sendComplete);
-      urlLoader.load(saveJPG);
+      urlLoader.load(saveImage);
+    }
 
-/*      function sendComplete(event:Event):void{
-        warn.visible = true;
-        addChild(warn);
-        warn.addEventListener(MouseEvent.MOUSE_DOWN, warnDown);
-        warn.buttonMode = true;
-      }*/
+    private function saveJPG(e:Event):void {
+      saveImage(TakePicture.JPG);
+    }
+    
+    private function savePNG(e:Event):void {
+      saveImage(TakePicture.PNG);
+    }
+    
+    private function sendComplete(e:Event):void {
+      logToConsole("send complete!");
+      logToConsole(urlLoader.data);
     }
   }
 }
