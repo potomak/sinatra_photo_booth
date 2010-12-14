@@ -1,0 +1,9 @@
+<!--
+run this command to compile:
+	mxmlc -compiler.source-path=. com/potomak/TakePictureShim.mxml
+-->
+
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml"
+ xmlns="com.potomak.*" layout="absolute">
+  <TakePicture/>
+</mx:Application>
