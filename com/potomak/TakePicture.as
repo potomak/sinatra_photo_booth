@@ -1,11 +1,18 @@
 package com.potomak {
+  import flash.display.Sprite;
+  import flash.display.StageAlign;
+  import flash.display.StageScaleMode;
   import flash.display.Bitmap;
   import flash.display.BitmapData;
+  import flash.display.DisplayObject;
   import flash.events.Event;
   import flash.events.MouseEvent;
+  import flash.events.TimerEvent;
   import flash.media.Camera;
   import flash.media.Video;
+  import flash.geom.Matrix;
   import flash.utils.ByteArray;
+  import flash.utils.Timer;
   import flash.net.URLRequestHeader;
   import flash.net.URLRequestMethod;
   import flash.net.URLRequest;
@@ -13,31 +20,69 @@ package com.potomak {
   import flash.external.ExternalInterface;
   import com.adobe.images.JPGEncoder;
   import com.adobe.images.PNGEncoder;
-  import mx.containers.Canvas;
-  import mx.core.UIComponent;
-  import mx.controls.Button;
 
-  public class TakePicture extends Canvas {
+  public class TakePicture extends Sprite {
     //var snd:Sound = new camerasound(); //new sound instance for the "capture" button click
 
     private var cam:Camera;
     private var video:Video;
     private var bitmapData:BitmapData;
     private var bitmap:Bitmap;
-    private var capture:Button;
-    private var save:Button;
     private var urlLoader:URLLoader;
     
     private static const JPG:String = "jpg";
     private static const PNG:String = "png";
 
     public function TakePicture():void {
-      logToConsole("starting...");
+      logToConsole("initialization...");
       
       urlLoader = new URLLoader();
       urlLoader.addEventListener(Event.COMPLETE, sendComplete);
       
+      attachExternalCallback("captureImage", captureImage);
+      
       setupUi();
+    }
+    
+    private function attachExternalCallback(functionName:String, closure:Function):void {
+      if (ExternalInterface.available) {
+        try {
+          logToConsole("adding " + functionName + " callback...");
+          ExternalInterface.addCallback(functionName, closure);
+          if (checkJavaScriptReady()) {
+            logToConsole("javascript is ready.");
+          }
+          else {
+            logToConsole("javascript is not ready, creating timer.");
+            var readyTimer:Timer = new Timer(100, 0);
+            readyTimer.addEventListener(TimerEvent.TIMER, timerHandler);
+            readyTimer.start();
+          }
+        }
+        catch (error:SecurityError) {
+          logToConsole("a SecurityError occurred: " + error.message);
+        }
+        catch (error:Error) {
+          logToConsole("an Error occurred: " + error.message);
+        }
+      }
+      else {
+        logToConsole("external interface is not available for this container.");
+      }
+    }
+    
+    private function checkJavaScriptReady():Boolean {
+      var isReady:Boolean = ExternalInterface.call("isReady");
+      return isReady;
+    }
+    
+    private function timerHandler(event:TimerEvent):void {
+      logToConsole("checking javascript status...");
+      var isReady:Boolean = checkJavaScriptReady();
+      if (isReady) {
+        logToConsole("javascript is ready.");
+        Timer(event.target).stop();
+      }
     }
     
     private function logToConsole(message:String):void {
@@ -45,7 +90,10 @@ package com.potomak {
     }
     
     private function setupUi():void {
-      logToConsole("setupUi...");
+      logToConsole("setup UI...");
+      
+      stage.scaleMode = StageScaleMode.NO_SCALE;
+      stage.align = StageAlign.TOP_LEFT;
       
       var bandwidth:int = 0; // Maximum amount of bandwidth that the current outgoing video feed can use, in bytes per second.
       var quality:int = 100; // This value is 0-100 with 1 being the lowest quality.
@@ -55,54 +103,38 @@ package com.potomak {
       cam.setMode(320, 240, 24, false); // setMode(videoWidth, videoHeight, video fps, favor area)
       video = new Video();
       video.attachCamera(cam);
-      var videoComponent:UIComponent = new UIComponent();
-      videoComponent.x = 20;
-      videoComponent.y = 20;
-      videoComponent.addChild(video);
-      addChild(videoComponent);
+/*      video.x = 2;
+      video.y = 2;*/
+      mirrorTransform(video);
+      stage.addChild(video);
       
       logToConsole("video attached!");
-
+      
       bitmapData = new BitmapData(video.width, video.height);
-
+      
       bitmap = new Bitmap(bitmapData);
-      var bitmapComponent:UIComponent = new UIComponent();
-      bitmapComponent.x = 360;
-      bitmapComponent.y = 20;
-      bitmapComponent.addChild(bitmap);
-      addChild(bitmapComponent);
+      bitmap.x = 320;
+      //bitmap.y = 2;
+      stage.addChild(bitmap);
       
       logToConsole("bitmap attached!");
-
-      capture = new Button();
-      capture.enabled = true;
-      capture.label = "Capture";
-      capture.width = 100;
-      capture.x = 20;
-      capture.y = 260;
-      capture.addEventListener(MouseEvent.CLICK, captureImage);
-      addChild(capture);
-      
-      logToConsole("capture button attached!");
-
-      save = new Button();
-      save.enabled = false;
-      save.label = "Save";
-      save.width = 100;
-      save.x = 140;
-      save.y = 260;
-      save.addEventListener(MouseEvent.CLICK, saveJPG);
-      addChild(save);
-      
-      logToConsole("save button attached!");
+    }
+    
+    private function mirrorTransform(displayObject:DisplayObject):void {
+      var matrix:Matrix = displayObject.transform.matrix;
+      matrix.a = -1;
+      matrix.tx = displayObject.width + displayObject.x;
+      displayObject.transform.matrix = matrix;
     }
 
-    private function captureImage(e:MouseEvent):void {
+    private function captureImage():void {
       //snd.play();
-      bitmapData.draw(video);
-      save.enabled = true;
-      //save.addEventListener(MouseEvent.CLICK, saveJPG);
-      save.addEventListener(MouseEvent.CLICK, savePNG);
+      
+      bitmapData.draw(video, video.transform.matrix);
+      
+      //ExternalInterface.call("enableSave");
+      
+      attachExternalCallback("saveImage", savePNG);
     }
     
     private function saveImage(type:String):void {
@@ -129,17 +161,17 @@ package com.potomak {
       urlLoader.load(saveImage);
     }
 
-    private function saveJPG(e:Event):void {
+    private function saveJPG():void {
       saveImage(TakePicture.JPG);
     }
     
-    private function savePNG(e:Event):void {
+    private function savePNG():void {
       saveImage(TakePicture.PNG);
     }
     
     private function sendComplete(e:Event):void {
       logToConsole("send complete!");
-      logToConsole(urlLoader.data);
+      logToConsole("send result: " + urlLoader.data);
     }
   }
 }
