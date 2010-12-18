@@ -1,3 +1,8 @@
+//
+// to compile run the command:
+//   mxmlc -compiler.source-path=. -output=public/flash/TakePicture.swf com/potomak/TakePicture.as
+//
+
 package com.potomak {
   import flash.display.Sprite;
   import flash.display.StageAlign;
@@ -132,9 +137,8 @@ package com.potomak {
       
       bitmapData.draw(video, video.transform.matrix);
       
-      //ExternalInterface.call("enableSave");
-      
       attachExternalCallback("saveImage", savePNG);
+      ExternalInterface.call("enableSave");
     }
     
     private function saveImage(type:String):void {
@@ -152,7 +156,6 @@ package com.potomak {
 
       var header:URLRequestHeader = new URLRequestHeader("Content-type", "application/octet-stream");
 
-      //var saveImage:URLRequest = new URLRequest("save.php");
       var saveImage:URLRequest = new URLRequest("save");
       saveImage.requestHeaders.push(header);
       saveImage.method = URLRequestMethod.POST;
@@ -172,6 +175,8 @@ package com.potomak {
     private function sendComplete(e:Event):void {
       logToConsole("send complete!");
       logToConsole("send result: " + urlLoader.data);
+      
+      ExternalInterface.call("sendComplete", urlLoader.data);
     }
   }
 }

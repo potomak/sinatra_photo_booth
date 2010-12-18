@@ -1,15 +1,18 @@
 require 'rubygems'
 require 'sinatra'
+require 'haml'
 
 get '/' do
-  redirect '/index.html'
+  haml :index
+end
+
+get '/images' do
+  @images = Dir.glob("public/images/*.png")
+  
+  haml :images
 end
 
 post '/save' do
-  # puts "save POST request"
-  # puts request.body
-  # puts request.body.inspect
-  
   result = "success"
   
   begin

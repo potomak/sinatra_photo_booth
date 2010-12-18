@@ -1,0 +1,36 @@
+!!!
+%html
+  %head
+    %meta{'http-equiv' => 'Content-Type', :content => 'text/html;charset=utf-8'}
+    %title= 'Sinatra Photo Booth'
+    
+    %script{:src => 'http://www.google.com/jsapi', :type => 'text/javascript'}
+    :javascript
+      google.load("swfobject", "2.1");
+    :javascript
+      google.setOnLoadCallback(function() {
+        jsReady = true;
+
+        // Lets Flash from another domain call JavaScript
+        var params = { allowScriptAccess: "always" };
+        // All of the magic handled by SWFObject (http://code.google.com/p/swfobject/)
+        swfobject.embedSWF("/flash/TakePicture.swf", "take_picture", "640", "240", "9", null, null, params);
+      });
+      
+    %script{:src => '/javascripts/take_picture.js', :type => 'text/javascript'}
+
+    %link{:href => '/stylesheets/style.css', :media => 'all', :rel => 'stylesheet', :type => 'text/css'}
+
+  %body
+    #header
+      %h1 Sinatra Photo Booth
+      %ul
+        %li
+          %a{:href => "/"} Take a picture
+        %li
+          %a{:href => "/images"} Gallery
+    #container
+      = yield
+    #footer
+      2010 &copy;
+      %a{:href => "http://www.focustheweb.com"} Giovanni Cappellotto

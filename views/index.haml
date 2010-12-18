@@ -1,0 +1,14 @@
+#take_picture
+
+%h1#self_timer
+
+%p
+  %a{:href => "#", :onclick => "captureImage(); return false"} Capture
+  %br
+  %a{:href => "#", :onclick => "selfTimer(3000); selfTimerVisual(3000); return false"} Self timer (3 secs)
+
+%p
+  %a{:href => "#", :onclick => "saveImage(); return false"} Save
+  %br
+  result: 
+  %span#send_result n/a
