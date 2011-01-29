@@ -16,8 +16,12 @@ post '/save' do
   result = "success"
   
   begin
+    puts "request.body: #{request.body}"
+    puts "request.to_s: #{request.body.to_s}"
+    puts "request: #{request}"
     FileUtils.copy_file(request.body.path, "public/images/yo_#{Time.now.to_i}.png")
-  rescue
+  rescue => e
+    puts "Error: #{e}"
     result = "failure"
   end
   
