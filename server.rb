@@ -27,19 +27,13 @@ post '/save' do
       :secret_access_key => ENV['S3_SECRET']
     )
     
-    puts "request.body: #{request.body}"
-    puts "request.to_s: #{request.body.to_s}"
-    puts "request.body.path: #{request.body.path}"
-    puts "request: #{request}"
-    
     AWS::S3::S3Object.store(
       "#{Time.now.to_i}.png",
       File.open(request.body.path),
       "photobooth.heroku.com"
     )
   rescue => e
-    puts "Error: #{e}"
-    result = "failure"
+    result = "failure (#{e})"
   end
   
   result
