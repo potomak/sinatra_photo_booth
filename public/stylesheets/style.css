@@ -7,3 +7,10 @@ a:active,
 a:visited {
 	color: #666;
 }
+
+#forkme img {
+	position: absolute;
+	top: 0;
+	right: 0;
+	border: 0;
+}
